@@ -73,3 +73,58 @@ macro_rules! impl_mut_player {
         }
     };
 }
+
+
+#[macro_export]
+macro_rules! define_feature_enum {
+    (
+        // Allow attributes (like #[derive(...)]) to be passed in
+        $(#[$meta:meta])*
+        // Capture visibility (pub), the `enum` keyword, and the enum name
+        $vis:vis enum $name:ident {
+            // Capture the variants
+            $(
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        // Generate the enum itself
+        $(#[$meta])*
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)] // Added basic derives for usability
+        $vis enum $name {
+            $( $variant ),*
+        }
+
+        // Implement the conversion logic
+        impl $name {
+            /// Generates the FeatureSelection layout
+            pub fn to_feature_selection() -> FeatureSelection {
+                use crate::options::FeatureOption;
+
+                FeatureSelection {
+                    name: stringify!($name).to_string(),
+                    options: vec![
+                        $(
+                            FeatureOption {
+                                name: stringify!($variant).to_string(),
+                                // Cast the variant to usize to automatically get a unique ID (0, 1, 2...)
+                                id: Self::$variant as usize, 
+                            }
+                        ),*
+                    ],
+                }
+            }
+
+            /// Reconstructs the enum variant from an ID
+            /// Explicitly uses std::option::Option to avoid struct naming conflicts
+            pub fn from_id(id: usize) -> std::option::Option<Self> {
+                $(
+                    if id == Self::$variant as usize {
+                        return std::option::Option::Some(Self::$variant);
+                    }
+                )*
+                std::option::Option::None
+            }
+        }
+    };
+}

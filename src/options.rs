@@ -4,10 +4,10 @@ pub struct FeatureSelections {
 
 pub struct FeatureSelection {
     pub name: String,
-    pub options: Option,
+    pub options: Vec<FeatureOption>,
 }
 
-pub struct Option {
+pub struct FeatureOption {
     pub name: String,
     pub id: usize,
 }
